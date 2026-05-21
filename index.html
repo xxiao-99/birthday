@@ -1,0 +1,1014 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<meta name="format-detection" content="telephone=no">
+<title>生日快乐 🎂</title>
+<style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+        width: 100vw;
+        height: 100vh;
+        overflow: hidden;
+        background: linear-gradient(135deg, #0a0015 0%, #1a0030 30%, #0d0028 60%, #0a0015 100%);
+        font-family: 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+        -webkit-tap-highlight-color: transparent;
+        -webkit-user-select: none;
+        user-select: none;
+    }
+
+    /* ============ 主内容（初始隐藏） ============ */
+    .main-content {
+        position: fixed;
+        top: 0; left: 0;
+        width: 100%; height: 100%;
+        opacity: 0;
+        transition: opacity 0.6s ease;
+        pointer-events: none;
+        z-index: 0;
+    }
+    .main-content.revealed {
+        opacity: 1;
+        pointer-events: auto;
+    }
+
+    /* 星空背景 */
+    .stars-layer {
+        position: fixed;
+        top: 0; left: 0;
+        width: 100%; height: 100%;
+        pointer-events: none;
+    }
+
+    .star {
+        position: absolute;
+        background: white;
+        border-radius: 50%;
+        animation: twinkle var(--duration) ease-in-out infinite;
+        animation-delay: var(--delay);
+    }
+
+    @keyframes twinkle {
+        0%, 100% { opacity: 0.3; transform: scale(1); }
+        50% { opacity: 1; transform: scale(1.5); }
+    }
+
+    /* 主画布 */
+    #fireworkCanvas {
+        position: fixed;
+        top: 0; left: 0;
+        width: 100%; height: 100%;
+        pointer-events: none;
+        z-index: 1;
+    }
+
+    /* 粒子画布 */
+    #particleCanvas {
+        position: fixed;
+        top: 0; left: 0;
+        width: 100%; height: 100%;
+        pointer-events: none;
+        z-index: 2;
+    }
+
+    /* 文字层 */
+    .text-layer {
+        position: fixed;
+        top: 0; left: 0;
+        width: 100%; height: 100%;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        z-index: 3;
+        pointer-events: none;
+    }
+
+    .greeting {
+        font-size: clamp(32px, 7vw, 68px);
+        font-weight: 900;
+        color: #ffd700;
+        text-shadow:
+            0 0 20px #ffd700,
+            0 0 40px #ff8c00,
+            0 0 60px #ff6600,
+            0 0 80px #ff4400;
+        opacity: 0;
+        letter-spacing: 0.15em;
+        margin-bottom: 20px;
+    }
+    .greeting.animate-in {
+        animation: bounceIn 1.2s ease-out forwards, glowPulse 2s ease-in-out infinite;
+        animation-delay: 0.3s, 1.5s;
+    }
+
+    @keyframes bounceIn {
+        0% { opacity: 0; transform: translateY(-60px) scale(0.3); }
+        20% { transform: translateY(0) scale(1.05); }
+        40% { transform: scale(0.9); }
+        60% { transform: scale(1.02); }
+        80% { transform: scale(0.95); }
+        100% { opacity: 1; transform: scale(1); }
+    }
+
+    @keyframes glowPulse {
+        0%, 100% { text-shadow: 0 0 20px #ffd700, 0 0 40px #ff8c00, 0 0 60px #ff6600, 0 0 80px #ff4400; }
+        50% { text-shadow: 0 0 30px #ffcc00, 0 0 60px #ffaa00, 0 0 90px #ff8800, 0 0 120px #ff6600; }
+    }
+
+    .sub-greeting {
+        font-size: clamp(13px, 2.8vw, 22px);
+        color: #ffccaa;
+        text-shadow: 0 0 10px #ff8866;
+        opacity: 0;
+        letter-spacing: 0.1em;
+    }
+    .sub-greeting.animate-in {
+        animation: fadeInUp 1s ease-out forwards;
+        animation-delay: 0.8s;
+    }
+
+    @keyframes fadeInUp {
+        0% { opacity: 0; transform: translateY(30px); }
+        100% { opacity: 1; transform: translateY(0); }
+    }
+
+    /* 蛋糕 */
+    .cake-container {
+        position: fixed;
+        bottom: 60px;
+        left: 50%;
+        transform: translateX(-50%);
+        z-index: 4;
+        pointer-events: none;
+        opacity: 0;
+    }
+    .cake-container.animate-in {
+        animation: cakeSlide 1.2s ease-out forwards;
+        animation-delay: 0.5s;
+    }
+
+    @keyframes cakeSlide {
+        0% { opacity: 0; transform: translateX(-50%) translateY(40px); }
+        100% { opacity: 1; transform: translateX(-50%) translateY(0); }
+    }
+
+    .cake {
+        font-size: 50px;
+        animation: cakeBounce 2s ease-in-out infinite;
+        filter: drop-shadow(0 0 15px #ff9966);
+    }
+
+    @keyframes cakeBounce {
+        0%, 100% { transform: translateY(0) scale(1); }
+        25% { transform: translateY(-8px) scale(1.08); }
+        50% { transform: translateY(0) scale(1); }
+        75% { transform: translateY(-5px) scale(1.04); }
+    }
+
+    /* 点击提示 */
+    .tap-hint {
+        position: fixed;
+        bottom: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        color: rgba(255,255,255,0.6);
+        font-size: 13px;
+        z-index: 5;
+        pointer-events: none;
+        opacity: 0;
+        transition: opacity 0.5s;
+    }
+    .tap-hint.visible {
+        opacity: 1;
+        animation: fadeInOut 3s ease-in-out infinite;
+    }
+
+    @keyframes fadeInOut {
+        0%, 100% { opacity: 0.4; }
+        50% { opacity: 0.9; }
+    }
+
+    /* 彩带掉落 */
+    .confetti {
+        position: fixed;
+        z-index: 3;
+        pointer-events: none;
+        animation: confettiFall var(--fall-time) linear forwards;
+    }
+
+    @keyframes confettiFall {
+        0% { opacity: 1; transform: translateY(-10vh) rotateZ(0deg) rotateX(0deg); }
+        25% { transform: translateY(25vh) rotateZ(var(--spin)) rotateX(180deg); }
+        50% { opacity: 0.9; transform: translateY(50vh) rotateZ(calc(var(--spin) * 2)) rotateX(360deg) translateX(var(--sway)); }
+        75% { opacity: 0.5; transform: translateY(75vh) rotateZ(calc(var(--spin) * 3)) rotateX(540deg) translateX(calc(var(--sway) * -1)); }
+        100% { opacity: 0; transform: translateY(100vh) rotateZ(calc(var(--spin) * 4)) rotateX(720deg) translateX(var(--sway)); }
+    }
+
+    /* ============ 信封覆盖层 ============ */
+    .envelope-overlay {
+        position: fixed;
+        top: 0; left: 0;
+        width: 100%; height: 100%;
+        z-index: 100;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        background: radial-gradient(ellipse at center, #1a0a2e 0%, #0a0015 100%);
+        pointer-events: auto;
+        transition: opacity 0.8s ease 0.6s, visibility 0.8s ease 0.6s;
+    }
+    .envelope-overlay.fade-out {
+        opacity: 0;
+        visibility: hidden;
+        pointer-events: none;
+    }
+
+    /* 信封容器 */
+    .envelope-wrapper {
+        position: relative;
+        width: min(320px, 80vw);
+        height: min(380px, 70vh);
+        perspective: 1200px;
+        cursor: pointer;
+    }
+
+    /* 信封主体 */
+    .envelope-body {
+        position: absolute;
+        bottom: 0;
+        width: 100%;
+        height: 70%;
+        background: linear-gradient(160deg, #c94b4b 0%, #a83232 40%, #8b1a1a 100%);
+        border-radius: 8px;
+        box-shadow:
+            0 10px 40px rgba(0,0,0,0.5),
+            inset 0 1px 0 rgba(255,255,255,0.1);
+        overflow: hidden;
+    }
+
+    /* 信封纹理 */
+    .envelope-body::before {
+        content: '';
+        position: absolute;
+        inset: 6px;
+        border: 2px dashed rgba(255,255,255,0.08);
+        border-radius: 4px;
+        pointer-events: none;
+    }
+    .envelope-body::after {
+        content: '';
+        position: absolute;
+        top: 0; left: 0; right: 0;
+        height: 40%;
+        background: linear-gradient(180deg, rgba(255,255,255,0.06) 0%, transparent 100%);
+        pointer-events: none;
+    }
+
+    /* 信封前面翻盖（底部那块，打开时往下翻） */
+    .envelope-flap-front {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        height: 60%;
+        background: linear-gradient(160deg, #d45757 0%, #b33a3a 40%, #9e2525 100%);
+        border-radius: 0 0 8px 8px;
+        transform-origin: top center;
+        transition: transform 0.8s cubic-bezier(0.68, -0.55, 0.27, 1.55);
+        box-shadow: 0 5px 20px rgba(0,0,0,0.4);
+        z-index: 2;
+    }
+    .envelope-flap-front.opened {
+        transform: rotateX(160deg);
+    }
+
+    /* 信封上翻盖（三角形，顶部那块） */
+    .envelope-flap-top {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 45%;
+        background: linear-gradient(160deg, #e06565 0%, #c44242 40%, #a83232 100%);
+        clip-path: polygon(0 0, 50% 100%, 100% 0);
+        border-radius: 8px 8px 0 0;
+        transform-origin: bottom center;
+        transition: transform 0.8s cubic-bezier(0.68, -0.55, 0.27, 1.55);
+        z-index: 3;
+        box-shadow: 0 -2px 10px rgba(0,0,0,0.3);
+    }
+    .envelope-flap-top.opened {
+        transform: rotateX(-170deg);
+    }
+
+    /* 火漆印章 */
+    .seal {
+        position: absolute;
+        top: 52%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: min(56px, 14vw);
+        height: min(56px, 14vw);
+        background: radial-gradient(circle at 30% 30%, #ffd700 0%, #daa520 40%, #b8860b 100%);
+        border-radius: 50%;
+        z-index: 10;
+        box-shadow:
+            0 4px 15px rgba(218,165,32,0.6),
+            0 0 30px rgba(255,215,0,0.3),
+            inset 0 2px 4px rgba(255,255,255,0.3);
+        transition: all 0.5s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: min(22px, 6vw);
+        filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
+    }
+    .seal::after {
+        content: '';
+        position: absolute;
+        width: 70%;
+        height: 70%;
+        border-radius: 50%;
+        border: 2px solid rgba(184,134,11,0.5);
+    }
+    .seal.breaking {
+        animation: sealBreak 0.6s ease forwards;
+    }
+
+    @keyframes sealBreak {
+        0% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+        30% { transform: translate(-50%, -50%) scale(1.2); opacity: 0.8; }
+        60% { transform: translate(-50%, -50%) scale(0.3); opacity: 0.4; }
+        100% { transform: translate(-50%, -50%) scale(0); opacity: 0; }
+    }
+
+    /* 火漆碎片 */
+    .seal-fragment {
+        position: absolute;
+        top: 52%;
+        left: 50%;
+        width: 8px;
+        height: 8px;
+        background: #daa520;
+        border-radius: 50%;
+        z-index: 9;
+        pointer-events: none;
+    }
+
+    /* 提示文字 */
+    .envelope-hint {
+        margin-top: 30px;
+        color: rgba(255,215,0,0.7);
+        font-size: 15px;
+        letter-spacing: 0.1em;
+        animation: hintPulse 2s ease-in-out infinite;
+        pointer-events: none;
+    }
+
+    @keyframes hintPulse {
+        0%, 100% { opacity: 0.5; transform: translateY(0); }
+        50% { opacity: 1; transform: translateY(-5px); }
+    }
+
+    /* 信封外围光粒子 */
+    .envelope-sparkle {
+        position: absolute;
+        pointer-events: none;
+        animation: sparkleFloat 2s ease-in-out infinite;
+        font-size: 12px;
+    }
+
+    @keyframes sparkleFloat {
+        0%, 100% { opacity: 0.3; transform: translateY(0) scale(1); }
+        50% { opacity: 1; transform: translateY(-10px) scale(1.3); }
+    }
+
+    /* 从信封中喷出粒子 */
+    .burst-particle {
+        position: fixed;
+        pointer-events: none;
+        z-index: 99;
+        font-size: 16px;
+        animation: burstOut var(--burst-dur) cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+    }
+
+    @keyframes burstOut {
+        0% { opacity: 1; transform: translate(0, 0) scale(0); }
+        20% { opacity: 1; transform: translate(var(--tx), var(--ty)) scale(1.5); }
+        100% { opacity: 0; transform: translate(calc(var(--tx) * 2), calc(var(--ty) * 2)) scale(0.3); }
+    }
+</style>
+</head>
+<body>
+
+<!-- ==================== 主内容 ==================== -->
+<div class="main-content" id="mainContent">
+    <!-- 星空背景 -->
+    <div class="stars-layer" id="starsLayer"></div>
+    <!-- 烟花画布 -->
+    <canvas id="fireworkCanvas"></canvas>
+    <!-- 粒子画布 -->
+    <canvas id="particleCanvas"></canvas>
+    <!-- 文字层 -->
+    <div class="text-layer">
+        <div class="greeting" id="greetingText">生日快乐</div>
+        <div class="sub-greeting" id="subGreeting">愿所有美好如约而至 ✨</div>
+    </div>
+    <!-- 蛋糕 -->
+    <div class="cake-container" id="cakeContainer">
+        <div class="cake">🎂</div>
+    </div>
+    <!-- 点击提示 -->
+    <div class="tap-hint" id="tapHint">👆 点击屏幕放烟花</div>
+</div>
+
+<!-- ==================== 信封覆盖层 ==================== -->
+<div class="envelope-overlay" id="envelopeOverlay">
+    <div class="envelope-wrapper" id="envelopeWrapper">
+        <!-- 火漆碎片容器 -->
+        <div id="sealFragments"></div>
+        <!-- 上翻盖 -->
+        <div class="envelope-flap-top" id="flapTop"></div>
+        <!-- 信封主体 -->
+        <div class="envelope-body"></div>
+        <!-- 底部翻盖 -->
+        <div class="envelope-flap-front" id="flapFront"></div>
+        <!-- 火漆印章 -->
+        <div class="seal" id="seal">💌</div>
+        <!-- 光粒子 -->
+        <div class="envelope-sparkle" style="top:15%;left:10%;animation-delay:0s">✨</div>
+        <div class="envelope-sparkle" style="top:10%;right:15%;animation-delay:0.5s">⭐</div>
+        <div class="envelope-sparkle" style="bottom:20%;left:5%;animation-delay:1s">💫</div>
+        <div class="envelope-sparkle" style="bottom:15%;right:8%;animation-delay:1.5s">✨</div>
+    </div>
+    <div class="envelope-hint">👆 点击拆开信封</div>
+</div>
+
+<script>
+(function() {
+    // ================= 配置 =================
+    const BIRTHDAY_NAME = '范迎蓝';
+    const SUB_TEXT = '愿所有美好如约而至 ✨';
+
+    // ================= 初始化文字 =================
+    const greetingEl = document.getElementById('greetingText');
+    greetingEl.textContent = BIRTHDAY_NAME + '生日快乐';
+    document.getElementById('subGreeting').textContent = SUB_TEXT;
+
+    // ================= 信封拆开逻辑 =================
+    const envelopeOverlay = document.getElementById('envelopeOverlay');
+    const envelopeWrapper = document.getElementById('envelopeWrapper');
+    const flapTop = document.getElementById('flapTop');
+    const flapFront = document.getElementById('flapFront');
+    const seal = document.getElementById('seal');
+    const sealFragments = document.getElementById('sealFragments');
+    const mainContent = document.getElementById('mainContent');
+    const tapHint = document.getElementById('tapHint');
+
+    let envelopeOpened = false;
+
+    function burstParticles() {
+        const rect = envelopeWrapper.getBoundingClientRect();
+        const cx = rect.left + rect.width / 2;
+        const cy = rect.top + rect.height * 0.4;
+        const emojis = ['🎉', '🎊', '💖', '❤️', '🌟', '✨', '🎀', '💝', '🎂', '🎈', '💐', '🎁', '💎', '🦋', '🌸', '💫'];
+
+        for (let i = 0; i < 35; i++) {
+            const particle = document.createElement('div');
+            particle.className = 'burst-particle';
+            const angle = Math.random() * Math.PI * 2;
+            const dist = 80 + Math.random() * 200;
+            const tx = Math.cos(angle) * dist;
+            const ty = Math.sin(angle) * dist - 40;
+
+            particle.style.cssText = `
+                left: ${cx}px;
+                top: ${cy}px;
+                --tx: ${tx}px;
+                --ty: ${ty}px;
+                --burst-dur: ${0.8 + Math.random() * 1.2}s;
+                animation-delay: ${Math.random() * 0.3}s;
+            `;
+            particle.textContent = emojis[Math.floor(Math.random() * emojis.length)];
+            document.body.appendChild(particle);
+
+            setTimeout(() => particle.remove(), 2000);
+        }
+    }
+
+    function createSealFragments() {
+        const rect = seal.getBoundingClientRect();
+        const cx = rect.left + rect.width / 2;
+        const cy = rect.top + rect.height / 2;
+
+        for (let i = 0; i < 12; i++) {
+            const frag = document.createElement('div');
+            const angle = Math.random() * Math.PI * 2;
+            const dist = 30 + Math.random() * 50;
+            frag.style.cssText = `
+                position: fixed;
+                left: ${cx}px;
+                top: ${cy}px;
+                width: ${4 + Math.random() * 6}px;
+                height: ${4 + Math.random() * 6}px;
+                background: ${Math.random() < 0.5 ? '#daa520' : '#ffd700'};
+                border-radius: ${Math.random() < 0.5 ? '50%' : '2px'};
+                z-index: 99;
+                pointer-events: none;
+                transition: all 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+                opacity: 1;
+            `;
+            document.body.appendChild(frag);
+
+            requestAnimationFrame(() => {
+                frag.style.left = `${cx + Math.cos(angle) * dist}px`;
+                frag.style.top = `${cy + Math.sin(angle) * dist}px`;
+                frag.style.opacity = '0';
+                frag.style.transform = `rotate(${Math.random() * 360}deg) scale(0.3)`;
+            });
+
+            setTimeout(() => frag.remove(), 900);
+        }
+    }
+
+    function openEnvelope(e) {
+        if (envelopeOpened) return;
+        envelopeOpened = true;
+
+        e.preventDefault();
+        e.stopPropagation();
+
+        // 火漆破碎
+        seal.classList.add('breaking');
+        createSealFragments();
+
+        // 信封打开
+        setTimeout(() => {
+            flapTop.classList.add('opened');
+            flapFront.classList.add('opened');
+            burstParticles();
+        }, 400);
+
+        // 显示主内容
+        setTimeout(() => {
+            mainContent.classList.add('revealed');
+            onEnvelopeRevealed();
+        }, 1000);
+
+        // 移除信封
+        setTimeout(() => {
+            envelopeOverlay.classList.add('fade-out');
+        }, 1500);
+
+        // 清理信封DOM
+        setTimeout(() => {
+            envelopeOverlay.remove();
+        }, 2500);
+    }
+
+    envelopeWrapper.addEventListener('click', openEnvelope);
+    envelopeWrapper.addEventListener('touchend', function(e) {
+        e.preventDefault();
+        openEnvelope(e);
+    });
+
+    // ================= 星空背景 =================
+    const starsLayer = document.getElementById('starsLayer');
+    function createStars(count) {
+        starsLayer.innerHTML = '';
+        for (let i = 0; i < count; i++) {
+            const star = document.createElement('div');
+            star.className = 'star';
+            const size = Math.random() * 3 + 1;
+            star.style.cssText = `
+                width: ${size}px;
+                height: ${size}px;
+                top: ${Math.random() * 100}%;
+                left: ${Math.random() * 100}%;
+                --duration: ${Math.random() * 3 + 2}s;
+                --delay: ${Math.random() * 5}s;
+                opacity: ${Math.random() * 0.6 + 0.4};
+            `;
+            starsLayer.appendChild(star);
+        }
+    }
+    createStars(120);
+
+    // ================= 烟花系统 =================
+    const fireworkCanvas = document.getElementById('fireworkCanvas');
+    const fctx = fireworkCanvas.getContext('2d');
+
+    // ================= 粒子系统 =================
+    const particleCanvas = document.getElementById('particleCanvas');
+    const pctx = particleCanvas.getContext('2d');
+
+    function resize() {
+        const w = window.innerWidth;
+        const h = window.innerHeight;
+        fireworkCanvas.width = w;
+        fireworkCanvas.height = h;
+        particleCanvas.width = w;
+        particleCanvas.height = h;
+    }
+    resize();
+    window.addEventListener('resize', resize);
+
+    // 烟花类
+    class Rocket {
+        constructor(x, targetY) {
+            this.x = x;
+            this.y = fireworkCanvas.height;
+            this.targetY = targetY || Math.random() * fireworkCanvas.height * 0.4 + fireworkCanvas.height * 0.08;
+            this.vy = -(Math.random() * 6 + 10);
+            this.vx = (Math.random() - 0.5) * 2;
+            this.trail = [];
+            this.alive = true;
+            this.color = `hsl(${Math.random() * 360}, 100%, 65%)`;
+            this.size = Math.random() * 2 + 1.5;
+        }
+
+        update() {
+            this.x += this.vx;
+            this.y += this.vy;
+            this.vy += 0.04;
+
+            this.trail.push({ x: this.x, y: this.y, alpha: 1 });
+            if (this.trail.length > 15) this.trail.shift();
+            for (let t of this.trail) t.alpha -= 0.06;
+
+            if (this.vy >= -1 && this.y <= this.targetY + 5) {
+                this.alive = false;
+            }
+        }
+
+        draw(ctx) {
+            for (let i = 0; i < this.trail.length; i++) {
+                const t = this.trail[i];
+                ctx.beginPath();
+                ctx.arc(t.x, t.y, this.size * 0.8, 0, Math.PI * 2);
+                ctx.fillStyle = this.color.replace('100%', '80%').replace('65%', '50%');
+                ctx.globalAlpha = t.alpha * 0.6;
+                ctx.fill();
+            }
+            ctx.globalAlpha = 1;
+
+            ctx.beginPath();
+            ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+            ctx.fillStyle = '#fff';
+            ctx.shadowBlur = 8;
+            ctx.shadowColor = this.color;
+            ctx.fill();
+            ctx.shadowBlur = 0;
+        }
+    }
+
+    // 爆炸粒子
+    class Spark {
+        constructor(x, y, color) {
+            this.x = x;
+            this.y = y;
+            this.color = color;
+            const angle = Math.random() * Math.PI * 2;
+            const speed = Math.random() * 6 + 2;
+            this.vx = Math.cos(angle) * speed;
+            this.vy = Math.sin(angle) * speed;
+            this.alpha = 1;
+            this.decay = Math.random() * 0.015 + 0.008;
+            this.size = Math.random() * 2.5 + 1;
+            this.gravity = 0.06;
+            this.alive = true;
+            this.trail = [];
+        }
+
+        update() {
+            this.trail.push({ x: this.x, y: this.y, alpha: this.alpha });
+            if (this.trail.length > 8) this.trail.shift();
+            this.vx *= 0.985;
+            this.vy *= 0.985;
+            this.vy += this.gravity;
+            this.x += this.vx;
+            this.y += this.vy;
+            this.alpha -= this.decay;
+            if (this.alpha <= 0.02) this.alive = false;
+        }
+
+        draw(ctx) {
+            for (let i = 0; i < this.trail.length; i++) {
+                const t = this.trail[i];
+                ctx.beginPath();
+                ctx.arc(t.x, t.y, this.size * 0.5, 0, Math.PI * 2);
+                ctx.fillStyle = this.color;
+                ctx.globalAlpha = t.alpha * 0.3;
+                ctx.fill();
+            }
+            ctx.globalAlpha = this.alpha;
+            ctx.beginPath();
+            ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+            ctx.fillStyle = this.color;
+            ctx.shadowBlur = 4;
+            ctx.shadowColor = this.color;
+            ctx.fill();
+            ctx.shadowBlur = 0;
+            ctx.globalAlpha = 1;
+        }
+    }
+
+    // 微小粒子
+    class TinySpark {
+        constructor(x, y, color) {
+            this.x = x;
+            this.y = y;
+            this.color = color;
+            const angle = Math.random() * Math.PI * 2;
+            const speed = Math.random() * 3 + 0.5;
+            this.vx = Math.cos(angle) * speed;
+            this.vy = Math.sin(angle) * speed;
+            this.alpha = 0.8;
+            this.decay = Math.random() * 0.025 + 0.015;
+            this.size = Math.random() * 1.5 + 0.5;
+            this.alive = true;
+        }
+
+        update() {
+            this.x += this.vx;
+            this.y += this.vy;
+            this.vy += 0.03;
+            this.alpha -= this.decay;
+            if (this.alpha <= 0.02) this.alive = false;
+        }
+
+        draw(ctx) {
+            ctx.globalAlpha = this.alpha;
+            ctx.beginPath();
+            ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+            ctx.fillStyle = this.color;
+            ctx.fill();
+            ctx.globalAlpha = 1;
+        }
+    }
+
+    const rockets = [];
+    const sparks = [];
+    const tinySparks = [];
+
+    function launchFirework(x, y) {
+        const targetY = y || Math.random() * fireworkCanvas.height * 0.35 + fireworkCanvas.height * 0.05;
+        rockets.push(new Rocket(x || Math.random() * fireworkCanvas.width, targetY));
+    }
+
+    function explode(x, y, color) {
+        const count = 60 + Math.floor(Math.random() * 40);
+        for (let i = 0; i < count; i++) sparks.push(new Spark(x, y, color));
+        for (let i = 0; i < 20; i++) sparks.push(new Spark(x, y, '#ffffff'));
+        for (let i = 0; i < 30; i++) tinySparks.push(new TinySpark(x, y, color));
+
+        // 心形
+        if (Math.random() < 0.3) {
+            for (let i = 0; i < 40; i++) {
+                const t = (i / 40) * Math.PI * 2;
+                const heartX = 16 * Math.pow(Math.sin(t), 3);
+                const heartY = -(13 * Math.cos(t) - 5 * Math.cos(2 * t) - 2 * Math.cos(3 * t) - Math.cos(4 * t));
+                const scale = Math.random() * 1.2 + 1.5;
+                const spark = new Spark(x, y, '#ff4488');
+                spark.vx = heartX * scale * 0.25;
+                spark.vy = heartY * scale * 0.25;
+                spark.decay = 0.006;
+                sparks.push(spark);
+            }
+        }
+
+        // 环形
+        if (Math.random() < 0.5) {
+            const ringColor = `hsl(${Math.random() * 360}, 100%, 70%)`;
+            for (let i = 0; i < 30; i++) {
+                const angle = (i / 30) * Math.PI * 2;
+                const spark = new Spark(x, y, ringColor);
+                const speed = 4 + Math.random() * 2;
+                spark.vx = Math.cos(angle) * speed;
+                spark.vy = Math.sin(angle) * speed;
+                spark.decay = 0.01;
+                sparks.push(spark);
+            }
+        }
+    }
+
+    function drawFireworks() {
+        fctx.globalCompositeOperation = 'destination-out';
+        fctx.fillStyle = 'rgba(0, 0, 0, 0.15)';
+        fctx.fillRect(0, 0, fireworkCanvas.width, fireworkCanvas.height);
+        fctx.globalCompositeOperation = 'lighter';
+
+        for (let i = rockets.length - 1; i >= 0; i--) {
+            const r = rockets[i];
+            r.update();
+            r.draw(fctx);
+            if (!r.alive) {
+                explode(r.x, r.y, r.color);
+                rockets.splice(i, 1);
+            }
+        }
+
+        for (let i = sparks.length - 1; i >= 0; i--) {
+            const s = sparks[i];
+            s.update();
+            if (!s.alive) { sparks.splice(i, 1); continue; }
+        }
+
+        for (const s of sparks) s.draw(fctx);
+
+        fctx.globalCompositeOperation = 'lighter';
+        for (let i = tinySparks.length - 1; i >= 0; i--) {
+            const t = tinySparks[i];
+            t.update();
+            if (!t.alive) { tinySparks.splice(i, 1); continue; }
+            t.draw(fctx);
+        }
+        fctx.globalCompositeOperation = 'source-over';
+    }
+
+    // ================= 飘落粒子 =================
+    const floatParticles = [];
+
+    function spawnFloatParticles(x, y, count) {
+        for (let i = 0; i < count; i++) {
+            floatParticles.push({
+                x: x + (Math.random() - 0.5) * 60,
+                y: y + (Math.random() - 0.5) * 40,
+                vx: (Math.random() - 0.5) * 1.5,
+                vy: Math.random() * 1.5 + 0.5,
+                size: Math.random() * 4 + 2,
+                alpha: 1,
+                decay: Math.random() * 0.005 + 0.002,
+                color: ['❤️', '💛', '💜', '💚', '⭐', '✨', '💖', '🎀', '🌟', '💝'][Math.floor(Math.random() * 10)],
+                rotation: Math.random() * 360,
+                rotSpeed: (Math.random() - 0.5) * 4
+            });
+        }
+    }
+
+    function drawFloatParticles() {
+        pctx.clearRect(0, 0, particleCanvas.width, particleCanvas.height);
+        for (let i = floatParticles.length - 1; i >= 0; i--) {
+            const p = floatParticles[i];
+            p.x += p.vx;
+            p.y += p.vy;
+            p.vy += 0.01;
+            p.alpha -= p.decay;
+            if (p.alpha <= 0.02) { floatParticles.splice(i, 1); continue; }
+            pctx.save();
+            pctx.globalAlpha = p.alpha;
+            pctx.translate(p.x, p.y);
+            pctx.rotate(p.rotation * Math.PI / 180);
+            pctx.font = `${p.size * 4}px serif`;
+            pctx.textAlign = 'center';
+            pctx.fillText(p.color, 0, 0);
+            pctx.restore();
+            p.rotation += p.rotSpeed;
+        }
+    }
+
+    // ================= 彩带 =================
+    function spawnConfetti(count) {
+        const colors = ['#ff6b6b', '#ffd93d', '#6bcb77', '#4d96ff', '#ff8c00',
+                        '#ff2060', '#f9ca24', '#e056a0', '#00d2ff', '#f0932b'];
+        for (let i = 0; i < count; i++) {
+            const confetti = document.createElement('div');
+            confetti.className = 'confetti';
+            const size = Math.random() * 8 + 4;
+            const color = colors[Math.floor(Math.random() * colors.length)];
+            const shape = Math.random() < 0.5 ? 'circle' : 'rect';
+            confetti.style.cssText = `
+                left: ${Math.random() * 100}vw;
+                top: -5vh;
+                width: ${shape === 'rect' ? size * 2 : size}px;
+                height: ${shape === 'rect' ? size : size}px;
+                background: ${color};
+                border-radius: ${shape === 'circle' ? '50%' : '2px'};
+                --fall-time: ${Math.random() * 2 + 2.5}s;
+                --spin: ${Math.random() * 720 - 360}deg;
+                --sway: ${Math.random() * 80 - 40}px;
+            `;
+            document.body.appendChild(confetti);
+            setTimeout(() => confetti.remove(), 3500);
+        }
+    }
+
+    // ================= 事件处理 =================
+    function handleInteraction(e) {
+        if (!envelopeOpened) return;
+        e.preventDefault();
+        const touch = e.touches ? e.touches[0] : e;
+        const x = touch.clientX;
+        const y = touch.clientY;
+        launchFirework(x, y);
+        spawnFloatParticles(x, y, 15);
+        spawnConfetti(12);
+    }
+
+    document.addEventListener('click', handleInteraction, { passive: false });
+    document.addEventListener('touchstart', handleInteraction, { passive: false });
+
+    // 定时自动放烟花
+    let autoLaunchTimer;
+    function autoLaunch() {
+        if (!envelopeOpened) return;
+        const x = Math.random() * fireworkCanvas.width;
+        const y = Math.random() * fireworkCanvas.height * 0.3 + fireworkCanvas.height * 0.05;
+        launchFirework(x, y);
+        setTimeout(() => {
+            const sx = x + (Math.random() - 0.5) * 100;
+            const sy = y + (Math.random() - 0.5) * 80;
+            spawnFloatParticles(sx, sy, 8);
+        }, 600);
+        const nextDelay = 1500 + Math.random() * 2500;
+        autoLaunchTimer = setTimeout(autoLaunch, nextDelay);
+    }
+
+    // ================= 背景音乐 =================
+    let audioInitialized = false;
+    function initAudio() {
+        if (audioInitialized) return;
+        audioInitialized = true;
+        try {
+            const AudioContext = window.AudioContext || window.webkitAudioContext;
+            const ac = new AudioContext();
+            const notes = [
+                { freq: 523, dur: 0.3 }, { freq: 523, dur: 0.3 },
+                { freq: 587, dur: 0.6 }, { freq: 523, dur: 0.6 },
+                { freq: 698, dur: 0.6 }, { freq: 659, dur: 0.9 },
+                { freq: 523, dur: 0.3 }, { freq: 523, dur: 0.3 },
+                { freq: 587, dur: 0.6 }, { freq: 523, dur: 0.6 },
+                { freq: 784, dur: 0.6 }, { freq: 698, dur: 0.9 },
+                { freq: 523, dur: 0.3 }, { freq: 523, dur: 0.3 },
+                { freq: 1047, dur: 0.6 }, { freq: 880, dur: 0.6 },
+                { freq: 698, dur: 0.6 }, { freq: 659, dur: 0.6 },
+                { freq: 587, dur: 0.9 },
+            ];
+            let t = ac.currentTime + 0.1;
+            notes.forEach(({ freq, dur }) => {
+                const osc = ac.createOscillator();
+                const gain = ac.createGain();
+                osc.type = 'triangle';
+                osc.frequency.value = freq;
+                gain.gain.setValueAtTime(0.3, t);
+                gain.gain.exponentialRampToValueAtTime(0.01, t + dur * 0.9);
+                osc.connect(gain);
+                gain.connect(ac.destination);
+                osc.start(t);
+                osc.stop(t + dur);
+                t += dur;
+            });
+        } catch(e) {}
+    }
+
+    document.addEventListener('click', initAudio, { once: true });
+    document.addEventListener('touchstart', initAudio, { once: true });
+
+    // ================= 信封打开后的回调 =================
+    function onEnvelopeRevealed() {
+        // 文字动画
+        greetingEl.classList.add('animate-in');
+        document.getElementById('subGreeting').classList.add('animate-in');
+        document.getElementById('cakeContainer').classList.add('animate-in');
+
+        // 显示点击提示
+        setTimeout(() => tapHint.classList.add('visible'), 2000);
+
+        // 开场多连发烟花
+        setTimeout(() => {
+            for (let i = 0; i < 5; i++) {
+                setTimeout(() => {
+                    const x = fireworkCanvas.width * (0.15 + i * 0.18);
+                    const y = fireworkCanvas.height * (0.08 + Math.random() * 0.2);
+                    launchFirework(x, y);
+                }, i * 400);
+            }
+        }, 400);
+
+        // 彩带
+        setTimeout(() => spawnConfetti(30), 200);
+        setTimeout(() => spawnConfetti(20), 900);
+        setTimeout(() => spawnConfetti(25), 1600);
+
+        // 启动自动烟花
+        autoLaunchTimer = setTimeout(autoLaunch, 2500);
+    }
+
+    // ================= 动画循环 =================
+    function animate() {
+        drawFireworks();
+        drawFloatParticles();
+        requestAnimationFrame(animate);
+    }
+    animate();
+
+    console.log('💌 ' + BIRTHDAY_NAME + '生日快乐！');
+    console.log('💖 点击信封拆开，然后点击屏幕放烟花！');
+})();
+</script>
+</body>
+</html>
